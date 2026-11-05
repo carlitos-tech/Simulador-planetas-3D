@@ -1,0 +1,171 @@
+<main class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Órbita, inicio">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <span>ÓRBITA<span class="brand-caption"> / EXPLORADOR SOLAR</span></span>
+    </a>
+    <div class="topbar-status"><span class="live-dot"></span> SISTEMA SOLAR · EN VIVO</div>
+    <button
+      class="icon-button help-button"
+      type="button"
+      aria-label="Información del simulador"
+      title="Arrastra para explorar · usa la rueda para acercar"
+    >
+      <span aria-hidden="true">?</span>
+    </button>
+  </header>
+
+  <div class="workspace">
+    <aside class="planet-panel" aria-label="Planetas del sistema solar">
+      <div class="panel-heading">
+        <span class="eyebrow">NAVEGACIÓN</span>
+        <span class="planet-count">08 CUERPOS</span>
+      </div>
+      <div class="planet-list">
+        @for (planet of planets; track planet.name; let index = $index) {
+          <button
+            class="planet-choice"
+            [class.active]="selectedPlanet().name === planet.name"
+            [attr.aria-pressed]="selectedPlanet().name === planet.name"
+            (click)="selectPlanet(planet)"
+            type="button"
+          >
+            <span class="planet-icon" [style.--planet-color]="planet.color"></span>
+            <span class="planet-choice-copy">
+              <span class="planet-choice-name">{{ planet.name }}</span>
+              <span class="planet-choice-type">{{ planet.type }}</span>
+            </span>
+            <span class="planet-index">0{{ index + 1 }}</span>
+          </button>
+        }
+      </div>
+      <div class="panel-footnote"><span class="key-hint">DRAG</span> para rotar la vista</div>
+    </aside>
+
+    <section class="universe" aria-label="Simulación 3D del sistema solar">
+      <canvas
+        #sceneCanvas
+        class="solar-canvas"
+        aria-label="Vista tridimensional interactiva del sistema solar"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"
+        (wheel)="onWheel($event)"
+      ></canvas>
+
+      <div class="universe-label">
+        <span class="eyebrow">VISTA DEL SISTEMA</span>
+        <span class="view-coordinates">SOL · {{ selectedPlanet().name | uppercase }}</span>
+      </div>
+      <div class="distance-scale"><span></span> DISTANCIAS NO A ESCALA</div>
+
+      <div class="scene-message" [hidden]="!sceneUnavailable()">
+        <span class="message-star">✦</span>
+        <strong>Tu navegador no puede mostrar la escena 3D</strong>
+        <span>Prueba con un navegador que tenga WebGL habilitado.</span>
+      </div>
+
+      <div class="zoom-controls" aria-label="Controles de zoom">
+        <button class="icon-button" type="button" (click)="zoomIn()" aria-label="Acercar">+</button>
+        <button class="icon-button" type="button" (click)="zoomOut()" aria-label="Alejar">−</button>
+        <button
+          class="icon-button reset-button"
+          type="button"
+          (click)="resetCamera()"
+          aria-label="Restablecer vista"
+          title="Restablecer vista"
+        >
+          ↺
+        </button>
+      </div>
+
+      <div class="simulation-controls">
+        <button
+          class="play-button"
+          type="button"
+          (click)="togglePlayback()"
+          [attr.aria-label]="paused() ? 'Reanudar simulación' : 'Pausar simulación'"
+        >
+          <span aria-hidden="true">{{ paused() ? '▶' : 'Ⅱ' }}</span>
+        </button>
+        <div class="control-copy">
+          <span class="eyebrow">SIMULACIÓN</span>
+          <strong>{{ paused() ? 'En pausa' : 'Órbitas activas' }}</strong>
+        </div>
+        <span class="control-divider"></span>
+        <div class="speed-options" aria-label="Velocidad de simulación">
+          @for (rate of speedOptions; track rate) {
+            <button
+              type="button"
+              [class.selected]="speed() === rate"
+              [attr.aria-pressed]="speed() === rate"
+              (click)="setSpeed(rate)"
+            >
+              {{ rate }}×
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <aside class="detail-panel" aria-live="polite">
+      <div class="detail-topline">
+        <span class="eyebrow">FICHA DE EXPLORACIÓN</span>
+        <span class="planet-symbol" [style.--planet-color]="selectedPlanet().color"></span>
+      </div>
+      <div class="planet-heading">
+        <span class="planet-order">PLANETA {{ selectedPlanet().order }}</span>
+        <h1>{{ selectedPlanet().name }}</h1>
+        <span class="planet-category">{{ selectedPlanet().type }}</span>
+      </div>
+      <p class="planet-description">{{ selectedPlanet().description }}</p>
+
+      <div class="fact-grid">
+        <div class="fact">
+          <span class="eyebrow">DIÁMETRO</span>
+          <strong>{{ selectedPlanet().diameter }}</strong>
+          <span class="fact-unit">km</span>
+        </div>
+        <div class="fact">
+          <span class="eyebrow">DÍA</span>
+          <strong>{{ selectedPlanet().day }}</strong>
+          <span class="fact-unit">terrestres</span>
+        </div>
+        <div class="fact">
+          <span class="eyebrow">AÑO</span>
+          <strong>{{ selectedPlanet().year }}</strong>
+          <span class="fact-unit">terrestres</span>
+        </div>
+        <div class="fact">
+          <span class="eyebrow">LUNAS</span>
+          <strong>{{ selectedPlanet().moons }}</strong>
+          <span class="fact-unit">conocidas</span>
+        </div>
+      </div>
+
+      <button
+        class="orbit-toggle"
+        type="button"
+        (click)="toggleOrbits()"
+        [attr.aria-pressed]="showOrbits()"
+      >
+        <span class="orbit-icon" aria-hidden="true">◎</span>
+        <span>Trayectorias orbitales</span>
+        <span class="toggle-indicator" [class.on]="showOrbits()"></span>
+      </button>
+      <div class="panel-bottom">
+        <span>DATOS ASTRONÓMICOS</span>
+        <span class="data-source">NASA · JPL</span>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="footer-bar">
+    <span><span class="footer-star">✦</span> Una pequeña ventana a nuestro vecindario cósmico</span>
+    <span class="footer-controls"
+      ><kbd>ARRASTRAR</kbd> ROTAR <i></i> <kbd>RUEDA</kbd> ZOOM <i></i>
+      <kbd>CLIC</kbd> EXPLORAR</span
+    >
+  </footer>
+</main>
